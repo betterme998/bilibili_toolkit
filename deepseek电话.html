@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>电话-姓名数据整理</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        line-height: 1.6;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+
+      input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+      }
+
+      /* 圆角滑块 */
+      .slider.round {
+        border-radius: 34px;
+      }
+
+      .slider.round:before {
+        border-radius: 50%;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .input-section,
+      .result-section {
+        margin-bottom: 30px;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .result-section {
+        display: none;
+      }
+      .result-item {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+      }
+      .result-item:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .phone {
+        font-weight: bold;
+        color: #007bff;
+      }
+      .name {
+        color: #333;
+      }
+      .stats {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+      }
+      .export-btn {
+        background-color: #28a745;
+        margin-left: 10px;
+      }
+      .export-btn:hover {
+        background-color: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>电话-姓名数据整理工具-配合xx.html使用，xx.html处理数据后拿过来用</h1>
+
+      <div class="input-section">
+        <h3>输入原始数据：</h3>
+        <textarea id="rawData" placeholder="请粘贴原始数据到这里..."></textarea>
+        <br /><br />
+        <button onclick="processData()">整理数据</button>
+
+        <label class="switch">
+          <input id="toggleSwitch" type="checkbox" checked />
+          <span class="slider round"></span>
+        </label>
+        <span>是否去重</span>
+      </div>
+
+      <div class="result-section" id="resultSection">
+        <h3>整理结果：</h3>
+        <div class="stats" id="stats"></div>
+        <div id="results"></div>
+        <br />
+        <button class="export-btn" onclick="exportData()">
+          导出为文本文件
+        </button>
+      </div>
+    </div>
+
+    <script>
+      let isChecked = true;
+      const toggleSwitch = document.getElementById("toggleSwitch");
+      // 添加开关变化事件监听器
+      toggleSwitch.addEventListener("change", function (event) {
+        // 获取当前状态
+        isChecked = event.target.checked;
+        console.log(isChecked);
+
+        // 更新当前状态显示
+        // updateStatusDisplay(isChecked);
+
+        // // 添加历史记录
+        // addHistoryRecord(isChecked);
+      });
+
+      function processData() {
+        const rawData = document.getElementById("rawData").value;
+        if (!rawData.trim()) {
+          alert("请输入数据");
+          return;
+        }
+
+        // 处理数据
+        const results2 = extractPhoneNamePairs(rawData);
+        const results = extractPhoneNamePairs(rawData, isChecked); //是否去重,我加的代码
+        // console.log(results);
+
+        // 显示结果
+        displayResults(results);
+
+        // 显示统计信息
+        document.getElementById("stats").innerHTML = `
+                共找到 <strong>${results.length}</strong> 条有效记录
+            `;
+
+        // 显示结果区域
+        document.getElementById("resultSection").style.display = "block";
+      }
+
+      function extractPhoneNamePairs(data, boolean = true) {
+        const lines = data.split("\n");
+        const results = [];
+        const phoneSet = new Set(); // 用于去重
+
+        lines.forEach((line) => {
+          if (!line.trim()) return;
+
+          // 使用正则表达式匹配电话号码
+          const phoneRegex = /1[3-9]\d{9}/g;
+          const phones = line.match(phoneRegex);
+
+          if (phones) {
+            phones.forEach((phone) => {
+              // 如果已经处理过这个电话号码，跳过
+              if (boolean) {
+                if (phoneSet.has(phone)) return;
+                phoneSet.add(phone);
+              }
+
+              // 从行中移除电话号码，剩下的部分可能包含姓名
+              let remainingText = line.replace(phone, "").trim();
+
+              // 清理文本：移除特殊字符和标点
+              remainingText = remainingText.replace(
+                /[：，。、；！？【】（）《》\-\s]/g,
+                " "
+              );
+              remainingText = remainingText.replace(/\s+/g, " ").trim();
+
+              // 提取姓名（中文姓名通常2-4个字符）
+              let name = "";
+              const nameMatch = remainingText.match(/[\u4e00-\u9fa5]{2,4}/);
+              if (nameMatch) {
+                name = nameMatch[0];
+              } else {
+                // 如果没有找到合适的姓名，使用剩余文本的前几个字符
+                name = remainingText.substring(0, 4).trim();
+                if (!name) {
+                  name = "未知";
+                }
+              }
+
+              if (name && phone) {
+                results.push({
+                  phone: phone,
+                  name: name,
+                });
+              }
+            });
+          }
+        });
+
+        return results;
+      }
+
+      function displayResults(results) {
+        const resultsContainer = document.getElementById("results");
+        resultsContainer.innerHTML = "";
+
+        if (results.length === 0) {
+          resultsContainer.innerHTML = "<p>未找到有效的电话-姓名数据</p>";
+          return;
+        }
+
+        results.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "result-item";
+          div.innerHTML = `
+                    <span class="phone">${item.phone}</span>
+                    <span class="name">${item.name}</span>
+                `;
+          resultsContainer.appendChild(div);
+        });
+      }
+
+      function exportData() {
+        const results = document.querySelectorAll(".result-item");
+        if (results.length === 0) {
+          alert("没有数据可导出");
+          return;
+        }
+
+        let exportText = "";
+        results.forEach((item) => {
+          const phone = item.querySelector(".phone").textContent;
+          const name = item.querySelector(".name").textContent;
+          exportText += `${phone}-${name}\n`;
+        });
+
+        const blob = new Blob([exportText], {
+          type: "text/plain;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "电话姓名数据.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // 页面加载时自动填充示例数据
+      window.onload = function () {
+        document.getElementById("rawData").value = `陈老板13032102408
+于广海13788980526
+：庄17301639555
+：陈13818004243
+人：陈13818004243
+送13146618646
+：18910510096
+13699193520石
+言：18201490687
+：18149794249丁开
+133 9860 3931
+未送13146618646
+：王日生13671850585
+：15011587251
+时间联系客户13381811170，
+13761308297
+，18655646678
+：15395542072`;
+      };
+    </script>
+  </body>
+</html>
