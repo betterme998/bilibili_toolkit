@@ -79,13 +79,13 @@ function readFolder(folderPath) {
       //     .replace(/\s/g, "");
 
       // 不裁剪 需要排序名称使用
-      // newName =
-      //   fileinfo.page_data.page +
-      //   "_" +
-      //   String(fileinfo.page_data.part).replace(/\s/g, "");
+      newName =
+        fileinfo.page_data.page +
+        "_" +
+        String(fileinfo.page_data.part).replace(/\s/g, "");
 
       // 不需要排序名称使用
-      newName = String(fileinfo.page_data.part).replace(/\s/g, "");
+      // newName = String(fileinfo.page_data.part).replace(/\s/g, "");
       // console.log(newName);
 
       //执行ffmpeg命令代码;
@@ -105,7 +105,7 @@ function readFolder(folderPath) {
 }
 
 // 指定要读取的文件夹路径
-const folderPath = "./a/114596807449382";
+const folderPath = "./a/995248168";
 
 // 调用函数
 readFolder(folderPath);
